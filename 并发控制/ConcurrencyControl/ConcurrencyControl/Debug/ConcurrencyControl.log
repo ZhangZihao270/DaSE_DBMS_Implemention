@@ -1,0 +1,9 @@
+﻿  cc_lock.cpp
+  cc_occ.cpp
+  cc_to.cpp
+  main.cpp
+c:\users\starr\desktop\dase数据库系统实现\并发控制\concurrencycontrol\concurrencycontrol\main.cpp(57): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\starr\desktop\dase数据库系统实现\并发控制\concurrencycontrol\concurrencycontrol\main.cpp(84): warning C4018: “<”: 有符号/无符号不匹配
+  structure.cpp
+  正在生成代码...
+c:\users\starr\desktop\dase数据库系统实现\并发控制\concurrencycontrol\concurrencycontrol\cc_lock.cpp(28): error C4716: “cc_lock::conflict_lock”: 必须返回一个值
