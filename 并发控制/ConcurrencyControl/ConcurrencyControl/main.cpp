@@ -82,7 +82,8 @@ void initial_data(Engine& engine, vector<int> &datalist) {
 RC release_lock(cc_lock& ccLock, vector<Lock> getLockList, thread::id tid) {
 	RC rc = RCOK;
 	for (int i = 0; i < getLockList.size(); i++) {
-		rc=ccLock.lock_release(getLockList[i].type, tid, getLockList[i].key);
+		auto find = ccLock.engine.data_map.find(getLockList[i].key);
+		rc=ccLock.lock_release(getLockList[i].type, tid, find->second);
 	}
 	return rc;
 }
@@ -98,11 +99,16 @@ RC transaction1(cc_lock& ccLock) {
 	rc = ccLock.get(to_string(k2), v2, tid);
 	if (v1 >= 2) {
 		rc = ccLock.update(to_string(k1), v1 - 2, tid);
-		Lock lock1 = Lock(to_string(k1), LOCK_EX);
-		getLockList.push_back(lock1);
+		if (rc != NOT_FOUND) {
+			Lock lock1 = Lock(to_string(k1), LOCK_EX);
+			getLockList.push_back(lock1);
+		}
+
 		rc = ccLock.update(to_string(k2), v2 + 2, tid);
-		Lock lock2 = Lock(to_string(k2), LOCK_EX);
-		getLockList.push_back(lock2);
+		if (rc != NOT_FOUND) {
+			Lock lock2 = Lock(to_string(k2), LOCK_EX);
+			getLockList.push_back(lock2);
+		}
 	}
 	rc = release_lock(ccLock, getLockList, tid);
 	return rc;
@@ -119,11 +125,16 @@ RC transaction2(cc_lock& ccLock) {
 	rc = ccLock.get(to_string(k2), v2, tid);
 	if (v1 >= 2) {
 		rc = ccLock.update(to_string(k1), v1 - 1, tid);
-		Lock lock1 = Lock(to_string(k1), LOCK_EX);
-		getLockList.push_back(lock1);
+		if (rc != NOT_FOUND) {
+			Lock lock1 = Lock(to_string(k1), LOCK_EX);
+			getLockList.push_back(lock1);
+		}
+
 		rc = ccLock.update(to_string(k2), v2 + 1, tid);
-		Lock lock2 = Lock(to_string(k2), LOCK_EX);
-		getLockList.push_back(lock2);
+		if (rc != NOT_FOUND) {
+			Lock lock2 = Lock(to_string(k2), LOCK_EX);
+			getLockList.push_back(lock2);
+		}
 	}
 	rc = release_lock(ccLock, getLockList, tid);
 	return rc;
@@ -141,16 +152,22 @@ RC transaction3(cc_lock& ccLock) {
 	rc = ccLock.get(to_string(k3), v3, tid);
 
 	rc = ccLock.update(to_string(k1), v1 * 2, tid);
-	Lock lock1 = Lock(to_string(k1), LOCK_EX);
-	getLockList.push_back(lock1);
+	if (rc != NOT_FOUND) {
+		Lock lock1 = Lock(to_string(k1), LOCK_EX);
+		getLockList.push_back(lock1);
+	}
 
 	rc = ccLock.update(to_string(k2), v2 + 5, tid);
-	Lock lock2 = Lock(to_string(k2), LOCK_EX);
-	getLockList.push_back(lock2);
+	if (rc != NOT_FOUND) {
+		Lock lock2 = Lock(to_string(k2), LOCK_EX);
+		getLockList.push_back(lock2);
+	}
 
 	rc = ccLock.update(to_string(k3), v3 + 10, tid);
-	Lock lock3 = Lock(to_string(k3), LOCK_EX);
-	getLockList.push_back(lock3);
+	if (rc != NOT_FOUND) {
+		Lock lock3 = Lock(to_string(k3), LOCK_EX);
+		getLockList.push_back(lock3);
+	}
 	
 	rc = release_lock(ccLock, getLockList, tid);
 	return rc;
@@ -162,13 +179,17 @@ RC transaction4(cc_lock& ccLock) {
 	tid = this_thread::get_id();
 	vector<Lock> getLockList;
 
-	ccLock.insert("6", 20, tid);
-	datalist.push_back(6);
+	rc=ccLock.insert("6", 20, tid);
+	if (rc != ALREADY_EXIST) {
+		datalist.push_back(6);
+	}
 
 	
-	ccLock.delete_("5", tid);
-	Lock lock1 = Lock("5", LOCK_EX);
-	getLockList.push_back(lock1);
+	rc=ccLock.delete_("5", tid);
+	if (rc != NOT_FOUND) {
+		Lock lock1 = Lock("5", LOCK_EX);
+		getLockList.push_back(lock1);
+	}
 
 	rc = release_lock(ccLock, getLockList, tid);
 	return rc;

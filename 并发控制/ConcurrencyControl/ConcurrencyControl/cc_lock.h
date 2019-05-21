@@ -14,10 +14,10 @@ public:
 	}
 
 	//获取锁
-	RC lock_get(lock_t type, thread::id tid, string key);
+	RC lock_get(lock_t type, thread::id tid, Data &data);
 
 	//释放锁
-	RC lock_release(lock_t type, thread::id tid, string key);
+	RC lock_release(lock_t type, thread::id tid, Data &data);
 
 	//更新操作
 	RC update(string key, int value, thread::id tid);
