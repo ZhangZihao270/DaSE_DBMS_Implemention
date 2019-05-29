@@ -43,7 +43,45 @@ for write:
 RC data_to::access(thread::id tid, TsType type, Data* data, time_t ts)
 {
 	RC rc = RCOK;
-
+	latch.lock();
+	if (type == R_REQ) {
+		if (ts < data_.writestamp)
+			rc = ABORT;
+		else if (ts > min_pts) {
+			buffer_req(R_REQ, tid, data, ts);
+			rc = WAIT;
+		}
+		else {
+			data->value = data_.value;
+			if (data_.readstamp < ts)
+				data_.readstamp = ts;
+			rc = RCOK;
+		}
+	}
+	else if (type == P_REQ) {
+		if (ts < data_.readstamp||ts<data_.writestamp)
+			rc = ABORT;
+		else {
+			buffer_req(P_REQ, tid, data, ts);
+			rc = RCOK;
+		}
+	}
+	else if (type == W_REQ) {
+		rc = RCOK;
+		if (ts > min_pts || ts > min_rts) {
+			buffer_req(W_REQ, tid, data, ts);
+			goto final;
+		}
+		else {
+			data_.value = data->value;
+			if (data_.writestamp < ts)
+				data_.writestamp = ts;
+			TOReqEntry* req = debuffer_req(P_REQ, tid);
+			update_buffer();
+		}
+	}
+	final:
+	latch.unlock();
 	return rc;
 }
 
@@ -188,7 +226,45 @@ while(true){
 void data_to::update_buffer()
 {
 	while (true) {
+		time_t new_min_pts = cal_min(P_REQ);
+		if (new_min_pts > min_pts)
+			min_pts = new_min_pts;
+		else
+			break;
+		TOReqEntry* ready_read = delete_buffer(R_REQ, min_pts);
+		if (ready_read == NULL) 
+			break;
+		TOReqEntry* req = ready_read;
+		while (req != NULL) {
+			req->data = &data_;
+			if (data_.readstamp < req->ts)
+				data_.readstamp = req->ts;
+			req = req->next;
+		}
 
+		time_t new_min_rts = cal_min(R_REQ);
+		if (new_min_rts > min_rts)
+			min_rts = new_min_rts;
+		else
+			break;
+		TOReqEntry* ready_write = delete_buffer(W_REQ, min_rts);
+		if (ready_write == NULL) 
+			break;
+		time_t young_ts = UINT64_MAX;
+		TOReqEntry* young_req = NULL;
+		req = ready_write;
+		while (req != NULL) {
+			TOReqEntry* tmp_req = debuffer_req(P_REQ, req->tid);
+			if (req->ts > young_ts) {
+				young_ts = req->ts;
+				young_req = req;
+			} //else loser = req;
+			req = req->next;
+		}
+		// perform write.
+		data_.value = young_req->data->value;
+		if (data_.writestamp < young_req->ts)
+			data_.writestamp = young_req->ts;
 	}
 }
 

@@ -43,7 +43,7 @@ int main() {
 	initial_data(ccTO.engine, datalist);
 
 	//start some threads and do transactions
-	for (int i = 0; i < 5; i++) {
+	for (int i = 0; i < 18; i++) {
 		int j = i % 3;
 		if (j == 0) {
 			threads.push_back(std::thread(do_transaction1, std::ref(ccTO)));
@@ -78,7 +78,7 @@ int main() {
 void initial_data(Engine& engine, vector<int> &datalist) {
 	for (int i = 0; i < 6; i++) {
 		data_to data = data_to();
-		data.data_.value = i+10;
+		data.data_.value = i+100;
 
 		engine.data_map[to_string(i)] = data;
 		datalist.push_back(i);
