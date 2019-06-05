@@ -42,6 +42,8 @@ public:
 	data_occ(const data_occ& d) {
 		*this = d;
 	}
+	int his_len;
+	int active_len;
 private:
 	bool test_validate(setEntry * set1, setEntry * set2);
 	RC get_rw_set(txn_man * txn, setEntry * &rset, setEntry * &wset);
@@ -51,7 +53,6 @@ private:
 	setEntry * history;
 	//wset of active txn
 	setEntry * active;
-	int his_len;
-	int active_len;
+
 	mutex latch;
 };
