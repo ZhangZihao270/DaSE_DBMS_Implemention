@@ -1,8 +1,6 @@
 #include<iostream>
 #include<string>
-#include<queue>
 #include<vector>
-#include<thread>
 #include"cc_lock.h"
 #include"global.h"
 #include"structure.h"
@@ -35,7 +33,7 @@ int main() {
 	initial_data(ccLock.engine, datalist);
 
 	//开启多个线程，模拟并发事务
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 12; i++) {
 		int j = i % 4;
 		if (j == 0) {
 			threads.push_back(std::thread(transaction1, std::ref(ccLock)));
@@ -58,11 +56,9 @@ int main() {
 		auto find = ccLock.engine.data_map.find(to_string(datalist[i]));
 		if (find->second.deleted) {
 			cout << "Key: " << i << "   has been deleted "  << endl;
-		}
-		cout << "Key: " << i << "   Value: " << find->second.value << endl;
-		//cout << find->second.owner.type;
+		} else
+			cout << "Key: " << i << "   Value: " << find->second.value << endl;
 	}
-	system("pause");
 	return 0;
 }
 
@@ -123,7 +119,7 @@ RC transaction2(cc_lock& ccLock) {
 	int v1, v2;
 	rc = ccLock.get(to_string(k1), v1, tid);
 	rc = ccLock.get(to_string(k2), v2, tid);
-	if (v1 >= 2) {
+	if (v1 >= 1) {
 		rc = ccLock.update(to_string(k1), v1 - 1, tid);
 		if (rc != NOT_FOUND) {
 			Lock lock1 = Lock(to_string(k1), LOCK_EX);

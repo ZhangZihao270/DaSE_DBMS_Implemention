@@ -1,7 +1,3 @@
-#include<iostream>
-#include<unordered_map>
-#include<string>
-
 #include"global.h"
 #include"structure.h"
 
