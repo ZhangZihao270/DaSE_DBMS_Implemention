@@ -11,25 +11,7 @@
  *    b. 若冲突，将自己要加的锁加到该数据的等待队列waitlist中，并对数据mutex加锁，然后被阻塞，等待数据上已有的锁被释放
  */
 RC cc_lock::lock_get(lock_t type, thread::id tid, Data &data){
-	RC rc = RCOK;
-	LockEntry lock1 = data.owner;
-	LockEntry lock2;
-	lock2.tid = tid;
-	lock2.type = type;
-	if (!conflict_lock(lock1, lock2)){
-		if (lock1.tid == lock2.tid)
-			data.owner.type = min(lock1.type, lock2.type);
-		else{
-			data.latch.lock();
-			data.owner = lock2;
-		}
-	}else{
-		data.waitlist.push(&lock2);
-		data.latch.lock();
-		data.owner = lock2;
-		data.waitlist.pop();
-	}
-	return rc;
+	
 }
 
 /*
@@ -38,17 +20,7 @@ RC cc_lock::lock_get(lock_t type, thread::id tid, Data &data){
  *    b. 若有阻塞锁请求，从waitlist中pop出头部的LockEntry，将owner置为该LockEntry，然后释放mutex
  */
 RC cc_lock::lock_release(lock_t type, thread::id tid, Data &data){
-	RC rc = RCOK;
-	if (data.waitlist.empty()){
-		data.latch.unlock();
-		data.owner.type = LOCK_NONE;
-	}else{
-		LockEntry *nowEntry = data.waitlist.front();
-		data.owner.tid = nowEntry->tid;
-		data.owner.type = nowEntry->type;
-		data.latch.unlock();
-	}
-	return rc;
+
 }
 
 /*
@@ -56,18 +28,7 @@ RC cc_lock::lock_release(lock_t type, thread::id tid, Data &data){
  * lock1是数据上的锁，lock2是需要加的锁
  */
 bool cc_lock::conflict_lock(LockEntry lock1, LockEntry lock2){
-    /*
-     * 若持有数据锁的线程和当前线程为同一个，则不冲突
-     */
-	if (lock1.tid == lock2.tid)
-		return false;
-	/*
-	 * 若有一个锁为写锁，则发生冲突
-	 */
-	if (lock1.type == LOCK_EX || lock2.type == LOCK_EX)
-		return true;
 
-	return false;
 }
 
 RC cc_lock::insert(string key, int value, thread::id tid){
